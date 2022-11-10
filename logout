@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/loginctl terminate-user "$USER"
