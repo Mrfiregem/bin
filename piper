@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 import argparse
 import os
 import subprocess
@@ -41,6 +41,12 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+
+def verbose_msg(msg):
+    if args.verbose:
+        sys.stderr.write(f"{parser.prog}: info: {msg}\n")
+
+
 # Make sure program user specifies exists
 program = which(args.program)
 if program is None:
@@ -57,21 +63,25 @@ editor = which(editor_name)
 if editor is None:
     sys.stderr.write(f"{parser.prog}: error: editor not in path: {editor_name}\n")
     exit(1)
-elif args.verbose:
-    sys.stderr.write(f"{parser.prog}: info: found program: {program}\n")
+verbose_msg(f"found program: {program}\n")
 
 
 # Create a temporary file and allow user to edit it
 with tempfile.NamedTemporaryFile(suffix=".piper.tmp") as tmp:
     tmp.flush()  # Ensure data is written to the file
+
+    # Open editor and store exitcode
     editor_exit = subprocess.call([editor, tmp.name])
     if editor_exit != 0:
         sys.stderr.write(
             f"{parser.prog}: error: {program} exited with code {editor_exit}\n"
         )
         exit(editor_exit)
-    elif tmp.readline().strip() == b"piper:exit":
-        print(f"{parser.prog}: info: found exit directive: exiting program")
+
+    # Store file content as list of lines
+    file_contents = tmp.readlines()
+    if file_contents[0].strip() == b"piper:exit":
+        verbose_msg(f"found exit directive: exiting program")
         tmp.close()
         exit(0)
 
@@ -82,18 +92,24 @@ with tempfile.NamedTemporaryFile(suffix=".piper.tmp") as tmp:
         ]
     else:
         pass_args = args.prog_args
+    verbose_msg(f"{pass_args=}")
 
     if args.type in ["stdin", "s"]:
         proc = subprocess.Popen([program] + pass_args, stdin=tmp)
     elif args.type in ["argument", "a"]:
         if r"{piper:filename}" in args.prog_args:
-            proc = subprocess.Popen([program] + pass_args)
+            final_args = [program] + pass_args
+            verbose_msg(f"{final_args=}")
+            proc = subprocess.Popen(final_args)
         else:
-            proc = subprocess.Popen([program] + pass_args + [tmp.name])
+            final_args = [program] + pass_args + [tmp.name]
+            verbose_msg(f"{final_args=}")
+            proc = subprocess.Popen(final_args)
     elif args.type in ["expand", "x"]:
-        proc = subprocess.Popen(
-            [program] + pass_args + [line.strip() for line in tmp.readlines() if line]
-        )
+        stripped_lines = [line.strip() for line in file_contents if line]
+        final_args = [program] + pass_args + stripped_lines
+        verbose_msg(f"{final_args=}")
+        proc = subprocess.Popen(final_args)
 
     proc.wait()
     tmp.close()
