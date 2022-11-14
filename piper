@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 import argparse
 import os
 import subprocess
@@ -76,7 +76,7 @@ if "VISUAL" in os.environ:
     editor_name = os.getenv("VISUAL")
 else:
     editor_name = os.getenv("EDITOR", "vim")
-editor = which(editor_name)
+editor = which(editor_name)  # type: ignore[type-var]
 
 if editor is None:
     sys.stderr.write(f"{parser.prog}: error: editor not in path: {editor_name}\n")
@@ -99,7 +99,7 @@ with tempfile.NamedTemporaryFile(suffix=".piper.tmp") as tmp:
     # Store file content as list of lines
     file_contents = tmp.readlines()
     if file_contents[0].strip() == b"piper:exit":
-        verbose_msg(f"found exit directive: exiting program")
+        verbose_msg("found exit directive: exiting program")
         tmp.close()
         exit(0)
 
