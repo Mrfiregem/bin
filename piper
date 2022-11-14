@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 import argparse
 import os
 import subprocess
@@ -7,11 +7,29 @@ import sys
 import tempfile
 from shutil import which
 
+help_msg = """\
+Tip: Use '--' after any piper flags to pass subsequent flags to your
+program correctly.
+
+'--type' can take one of three arguments:
+    - stdin / s:    Pass the file to the program's stdin.
+    - argument / a: Pass the filename as the last arg
+                    to the program, or replace the
+                    string '{piper:filename}' with it.
+    - expand / x:   Append each line of the file as an
+                    argument to the program after.
+
+Piper will quit without running the program if your editor exits with
+a non-zero error code (e.g. with vim's :cquit). If your editor does
+not support this, you can also accomplish the same thing by writing
+'piper:exit' as the first line of text in the file."""
+
 # Parse commandline arguments
 parser = argparse.ArgumentParser(
     prog="piper",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
     description="Write a file with your editor, and pass it to a program.",
-    epilog="Use '--' to prevent program flags to the right of it being parsed by piper.",
+    epilog=help_msg,
 )
 parser.add_argument(
     "-v",
