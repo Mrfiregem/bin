@@ -1,0 +1,42 @@
+#!/bin/sh
+_print_help() {
+  echo "Usage: pwgen [-h] [-l INT] [--date] [--verbose]"
+  exit 0
+}
+len=16
+while [ -n "$1" ]; do
+  case "$1" in
+  -h | --help)
+    _print_help
+    ;;
+  -l | --length)
+    len=$2
+    case $len in
+    '' | *[!0-9]*)
+      echo "Error: Length missing or wrong type." 1>&2
+      exit 1
+      ;;
+    esac
+    shift 2
+    ;;
+  -d | --date)
+    DatePw='yes'
+    shift 1
+    ;;
+  -v | --verbose)
+    Verbose='yes'
+    shift 1
+    ;;
+  *)
+    echo "Warning: Unknown argument: ${1}" 1>&2
+    shift 1
+    ;;
+  esac
+done
+if [ "$DatePw" = 'yes' ]; then
+  pw=$(date +%s | sha256sum | base64 | head -c "$len")
+else
+  pw=$(tr -dc _A-Z-a-z-0-9 </dev/urandom | head -c "$len")
+fi
+[ "$Verbose" = 'yes' ] && printf 'Copy password to clipboard [%d chars]:\n' "$len"
+printf '%s\n' "$pw"
