@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+tab=$'\t'
+fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
+ids=("$(flatpak list | fzf "${fzf_args[@]}" | cut -d "$tab" -f 2)")
+
+if [[ -z ${ids[*]} ]]; then
+  echo "No files selected."
+  exit 0
+else
+  echo "Uninstalling: ${ids[*]}"
+  while :; do
+    read -r -n 1 -p 'Continue? [Y|n]: ' ans
+    echo
+    case "$ans" in
+    n | N)
+      echo "User cancelled operation."
+      exit 0
+      ;;
+    y | Y | '')
+      flatpak uninstall --delete-data --noninteractive "${ids[@]}"
+      exit "$?"
+      ;;
+    *) continue ;;
+    esac
+  done
+fi
