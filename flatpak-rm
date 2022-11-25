@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 tab=$'\t'
-fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
+fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--with-nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
 ids=("$(flatpak list | fzf "${fzf_args[@]}" | cut -d "$tab" -f 2)")
 
 if [[ -z ${ids[*]} ]]; then
