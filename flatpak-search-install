@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+tab=$'\t'
+fzf_args=("--delimiter=${tab}" '--with-nth=1..2')
+column_args=(
+  '--table'
+  '--table-noheadings'
+  '--separator'
+  "$tab"
+  '--output-separator'
+  "$tab"
+  '--table-columns'
+  'Name,Description,ID,Remote'
+)
+: "${query:=$1}"
+
+if [[ -z $query ]]; then
+  read -rp 'Search: ' query
+fi
+
+output=$(flatpak search --columns='name,description,application,remotes' "$query" |
+  column "${column_args[@]}" |
+  fzf "${fzf_args[@]}" |
+  awk -v 'OFS=\n' '{print $(NF-1), $NF}')
+
+if [[ -z $output ]]; then
+  echo "No program selected."
+  exit 0
+fi
+mapfile -t id <<<"$output"
+
+exec flatpak install "${id[1]}" "${id[0]}"
