@@ -1,6 +1,6 @@
 # `~/.local/bin`
 
-Short scripts that don't need to be compiled or require build dependencies.
+Single-file scripts that don't need to be compiled.
 
 | script                 | description                                           | type |
 | ---------------------- | ----------------------------------------------------- | ---- |
