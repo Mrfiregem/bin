@@ -114,7 +114,8 @@ with tempfile.NamedTemporaryFile(suffix=".piper.tmp") as tmp:
     verbose_msg(f"{pass_args=}")
 
     if args.type in ["stdin", "s"]:
-        proc = subprocess.Popen([program] + pass_args, stdin=tmp)
+        verbose_msg(f"Passing contents of file to {program}")
+        subprocess.run([program] + pass_args, input=b"".join(file_contents))
     elif args.type in ["argument", "a"]:
         if r"{piper:filename}" in args.prog_args:
             final_args = [program] + pass_args
@@ -124,11 +125,12 @@ with tempfile.NamedTemporaryFile(suffix=".piper.tmp") as tmp:
             final_args = [program] + pass_args + [tmp.name]
             verbose_msg(f"{final_args=}")
             proc = subprocess.Popen(final_args)
+        proc.wait()
     elif args.type in ["expand", "x"]:
         stripped_lines = [line.strip() for line in file_contents if line]
         final_args = [program] + pass_args + stripped_lines
         verbose_msg(f"{final_args=}")
         proc = subprocess.Popen(final_args)
+        proc.wait()
 
-    proc.wait()
     tmp.close()
