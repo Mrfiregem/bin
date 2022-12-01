@@ -12,7 +12,7 @@ Tip: Use '--' after any piper flags to pass subsequent flags to your
 program correctly.
 
 '--type' can take one of three arguments:
-    - stdin / s:    Pass the file to the program's stdin.
+    - stdin / s:    Pass the file to the program's stdin. (default)
     - argument / a: Pass the filename as the last arg
                     to the program, or replace the
                     string '{piper:filename}' with it.
@@ -95,6 +95,7 @@ with tempfile.NamedTemporaryFile(suffix=".piper.tmp") as tmp:
             f"{parser.prog}: error: {program} exited with code {editor_exit}\n"
         )
         exit(editor_exit)
+    verbose_msg(f"File saved to {tmp.name}")
 
     # Store file content as list of lines
     file_contents = tmp.readlines()
