@@ -11,13 +11,14 @@ column_args=(
   '--table-columns'
   'Name,Description,ID,Remote'
 )
-: "${query:=$1}"
 
-if [[ -z $query ]]; then
-  read -rp 'Search: ' query
+if [[ -z $1 ]]; then
+  read -rp 'Search: ' -a query
+else
+  query=("$@")
 fi
 
-output=$(flatpak search --columns='name,description,application,remotes' "$query" |
+output=$(flatpak search --columns='name,description,application,remotes' "${query[@]}" |
   column "${column_args[@]}" |
   fzf "${fzf_args[@]}" |
   awk -v 'OFS=\n' '{print $(NF-1), $NF}')
