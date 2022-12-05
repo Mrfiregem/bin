@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 tab=$'\t'
 fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--with-nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
-ids=("$(flatpak list | fzf "${fzf_args[@]}" | cut -d "$tab" -f 2)")
+case "$1" in
+app)
+  pkgs=$(flatpak list --app)
+  ;;
+runtime)
+  pkgs=$(flatpak list --runtime)
+  ;;
+*)
+  pkgs=$(flatpak list)
+  ;;
+esac
+mapfile -t ids < <(fzf "${fzf_args[@]}" <<<"$pkgs" | cut -d "$tab" -f 2)
 
 if [[ -z ${ids[*]} ]]; then
   echo "No files selected."
@@ -17,7 +28,7 @@ else
       exit 0
       ;;
     y | Y | '')
-      flatpak uninstall --delete-data --noninteractive "${ids[@]}"
+      flatpak uninstall --delete-data --noninteractive -- "${ids[@]}"
       exit "$?"
       ;;
     *) continue ;;
