@@ -20,7 +20,7 @@ if [[ -z ${ids[*]} ]]; then
 else
   echo "Uninstalling: ${ids[*]}"
   while :; do
-    read -r -n 1 -p 'Continue? [Y|n]: ' ans
+    read -r -n 1 -p 'Continue? [Yn]: ' ans
     echo
     case "$ans" in
     n | N)
