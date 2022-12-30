@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 tab=$'\t'
-fzf_args=("--delimiter=${tab}" '--with-nth=1..2' '--ansi')
-
-column_args=(
-  '--table'
-  '--table-noheadings'
-  '--separator'
-  "$tab"
-  '--output-separator'
-  "$tab"
-  '--table-columns'
-  'Name,Description,ID,Remote'
+fzf_args=(
+  "--delimiter=${tab}"
+  '--with-nth=1,2'
+  '--cycle'
+  '--header=Flatpak Installer'
+  '--preview=printf "%-8s: %s\n" package {1} app-id {3} version {4} branch {5} branch {6}'
+  '--preview-label=Package Information'
+  '--preview-window=top,5'
 )
-flatpak_args=('--columns=name,description,application,remotes')
 
 # If no query provided from cli, ask for input
 if [[ -z $1 ]]; then
@@ -21,13 +17,13 @@ else
   query=("$@")
 fi
 
-mapfile -t id < <(flatpak search "${flatpak_args[@]}" -- "${query[@]}" |
-  column "${column_args[@]}" | fzf "${fzf_args[@]}" |
-  awk -v 'OFS=\n' '{print $(NF-1), $NF}')
+mapfile -t pkg_info < <(flatpak search -- "${query[@]}" |
+  fzf "${fzf_args[@]}" |
+  awk -v 'FS=\t' -v 'OFS=\n' '{ print $6, $3 "//" $5 }')
 
-if [[ -z ${id[*]} ]]; then
+if [[ -z ${pkg_info[*]} ]]; then
   echo "No program selected."
   exit 0
 fi
 
-exec flatpak install "${id[1]}" "${id[0]}"
+exec flatpak install -- "${pkg_info[0]}" "${pkg_info[1]}"

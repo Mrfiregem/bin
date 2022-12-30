@@ -1,18 +1,32 @@
 #!/usr/bin/env bash
 tab=$'\t'
 fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--with-nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
-case "$1" in
-app)
-  pkgs=$(flatpak list --app)
-  ;;
-runtime)
-  pkgs=$(flatpak list --runtime)
-  ;;
-*)
-  pkgs=$(flatpak list)
-  ;;
-esac
-mapfile -t ids < <(fzf "${fzf_args[@]}" <<<"$pkgs" | cut -d "$tab" -f 2)
+pkgs=$(flatpak list)
+
+# Parse command arguments
+while [ -n "$1" ]; do
+  case "$1" in
+  -t | --type)
+    case "$2" in
+    app)
+      pkgs=$(flatpak list --app)
+      ;;
+    runtime)
+      pkgs=$(flatpak list --runtime)
+      ;;
+    *)
+      echo "-t should be 'app' or 'runtime'"
+      ;;
+    esac
+    shift 2
+    ;;
+  *)
+    query=$1
+    shift
+    ;;
+  esac
+done
+mapfile -t ids < <(fzf "${fzf_args[@]}" --query="$query" <<<"$pkgs" | cut -d "$tab" -f 2)
 
 if [[ -z ${ids[*]} ]]; then
   echo "No files selected."
@@ -20,7 +34,7 @@ if [[ -z ${ids[*]} ]]; then
 else
   echo "Uninstalling: ${ids[*]}"
   while :; do
-    read -r -n 1 -p 'Continue? [Yn]: ' ans
+    read -r -n 1 -p 'Continue? [Y/n]: ' ans
     echo
     case "$ans" in
     n | N)
