@@ -10,20 +10,49 @@ fzf_args=(
   '--preview-window=top,5'
 )
 
+declare -a query
+declare remote
+
+while [[ -n $1 ]]; do
+  case "$1" in
+  -r | --remote)
+    remote=$2
+    shift 2
+    ;;
+  -*)
+    printf 'Unknown flag: %s\n' "$1" >&2
+    shift 1
+    ;;
+  *)
+    query+=("$1")
+    shift 1
+    ;;
+  esac
+done
+
 # If no query provided from cli, ask for input
-if [[ -z $1 ]]; then
+if [[ ${query[*]} == '' ]]; then
   read -rp 'Search: ' -a query
-else
-  query=("$@")
 fi
 
-mapfile -t pkg_info < <(flatpak search -- "${query[@]}" |
-  fzf "${fzf_args[@]}" |
-  awk -v 'FS=\t' -v 'OFS=\n' '{ print $6, $3 "//" $5 }')
+raw_search=$(flatpak search -- "${query[@]}")
+if [[ -n $remote ]]; then
+  raw_search=$(awk -F "$tab" '$6 == "'"${remote}"'" { print }' <<<"$raw_search")
+fi
+
+if [[ $raw_search == '' ]]; then
+  echo "No matches found." >&2
+  exit 1
+fi
+
+mapfile -t pkg_info < <(fzf "${fzf_args[@]}" <<<"$raw_search" | awk -v 'FS=\t' -v 'OFS=\n' '{ print $6, $3 "//" $5, $1 }')
 
 if [[ -z ${pkg_info[*]} ]]; then
-  echo "No program selected."
+  echo 'No program selected.'
   exit 0
+elif [[ -z ${pkg_info[2]} ]]; then
+  echo 'No matches found.' >&2
+  exit 1
 fi
 
 exec flatpak install -- "${pkg_info[0]}" "${pkg_info[1]}"
