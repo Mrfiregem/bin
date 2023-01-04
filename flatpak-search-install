@@ -10,12 +10,23 @@ fzf_args=(
   '--preview-window=top,5'
 )
 
+help_msg() {
+  cat <<EOF
+usage: flatpak-search-install [-h] [-f | -r REMOTE] [QUERY]
+
+Command-line Flags:
+  -h         Show this message
+  -f         Shorthand for '-r flathub'
+  -r REMOTE  Filter only apps in REMOTE
+EOF
+}
+
 declare -a query
 declare remote
 
 while [[ -n $1 ]]; do
   case "$1" in
-  -r | --remote)
+  -r)
     remotes=$(flatpak remotes | cut -f 1)
     if grep -q "$2" <<<"$remotes"; then
       remote=$2
@@ -25,13 +36,22 @@ while [[ -n $1 ]]; do
     fi
     shift 2
     ;;
+  -f)
+    remote='flathub'
+    shift
+    ;;
+  -h)
+    help_msg
+    exit 0
+    ;;
   -*)
     printf 'Unknown flag: %s\n' "$1" >&2
-    shift 1
+    help_msg
+    exit 3
     ;;
   *)
     query+=("$1")
-    shift 1
+    shift
     ;;
   esac
 done
