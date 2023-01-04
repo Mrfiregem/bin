@@ -16,7 +16,13 @@ declare remote
 while [[ -n $1 ]]; do
   case "$1" in
   -r | --remote)
-    remote=$2
+    remotes=$(flatpak remotes | cut -f 1)
+    if grep -q "$2" <<<"$remotes"; then
+      remote=$2
+    else
+      printf '%s is not a valid remote.\n' "$2" >&2
+      exit 1
+    fi
     shift 2
     ;;
   -*)
