@@ -13,6 +13,7 @@ fzf_args=(
 help_msg() {
   cat <<EOF
 usage: flatpak-search-install [-h] [-f | -r REMOTE] [QUERY]
+Interactively install a flatpak with fzf.
 
 Command-line Flags:
   -h --help  Show this message

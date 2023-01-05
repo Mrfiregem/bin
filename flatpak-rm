@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
 tab=$'\t'
-fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--with-nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
+fzf_args=(
+  '--exact'
+  '--multi'
+  "--delimiter=${tab}"
+  '--with-nth=1..2'
+  '--preview=flatpak info {2}//{4}'
+  '--preview-label=Flatpak Info'
+  '--preview-window=up'
+)
 pkgs=$(flatpak list)
 
 help_msg() {
   cat <<EOF
 usage: flatpak-rm [-h] [-a | -r] [QUERY]
+Interactively remove flatpaks with fzf.
 
 Command-line Flags:
   -h --help     Show this message
