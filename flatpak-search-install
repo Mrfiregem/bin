@@ -15,7 +15,7 @@ help_msg() {
 usage: flatpak-search-install [-h] [-f | -r REMOTE] [QUERY]
 
 Command-line Flags:
-  -h         Show this message
+  -h --help  Show this message
   -f         Shorthand for '-r flathub'
   -r REMOTE  Filter only apps in REMOTE
 EOF
@@ -26,6 +26,10 @@ declare remote
 
 while [[ -n $1 ]]; do
   case "$1" in
+  -h | --help)
+    help_msg
+    exit 0
+    ;;
   -r)
     remotes=$(flatpak remotes | cut -f 1)
     if grep -q "$2" <<<"$remotes"; then
@@ -40,13 +44,9 @@ while [[ -n $1 ]]; do
     remote='flathub'
     shift
     ;;
-  -h)
-    help_msg
-    exit 0
-    ;;
   -*)
     printf 'Unknown flag: %s\n' "$1" >&2
-    help_msg
+    help_msg >&2
     exit 3
     ;;
   *)

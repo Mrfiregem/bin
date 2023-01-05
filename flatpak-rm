@@ -3,22 +3,44 @@ tab=$'\t'
 fzf_args=('--exact' '--multi' "--delimiter=${tab}" '--with-nth=1..2' '--preview=flatpak info {2}//{4}' '--preview-label=Flatpak Info' '--preview-window=up')
 pkgs=$(flatpak list)
 
+help_msg() {
+  cat <<EOF
+usage: flatpak-rm [-h] [-a | -r] [QUERY]
+
+Command-line Flags:
+  -h --help     Show this message
+  -a --app      Filter only applications
+  -r --runtime  Filter only runtimes
+EOF
+}
+
+declare -a query
+
 # Parse command arguments
 while [ -n "$1" ]; do
   case "$1" in
+  -h | --help)
+    help_msg
+    exit 0
+    ;;
   -a | --app)
     pkgs=$(flatpak list --app)
     ;;
   -r | --runtime)
     pkgs=$(flatpak list --runtime)
     ;;
+  -*)
+    printf 'Unknown flag: %s\n' "$1" >&2
+    help_msg >&2
+    exit 1
+    ;;
   *)
-    query=$1
+    query+=("$1")
     ;;
   esac
   shift
 done
-mapfile -t ids < <(fzf "${fzf_args[@]}" --query="$query" <<<"$pkgs" | cut -d "$tab" -f 2)
+mapfile -t ids < <(fzf "${fzf_args[@]}" --query="${query[*]}" <<<"$pkgs" | cut -d "$tab" -f 2)
 
 if [[ -z ${ids[*]} ]]; then
   echo "No files selected."
