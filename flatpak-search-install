@@ -10,6 +10,8 @@ fzf_args=(
   '--preview-window=top,5'
 )
 
+debug_echo() { [[ -z ${verbose:+'is_set'} ]] || printf ':: %s\n' "$1" >&2; }
+
 help_msg() {
   cat <<EOF
 usage: flatpak-search-install [-h] [-f | -r REMOTE] [QUERY]
@@ -45,6 +47,10 @@ while [[ -n $1 ]]; do
     remote='flathub'
     shift
     ;;
+  -v | --verbose)
+    verbose=1
+    shift
+    ;;
   -*)
     printf 'Unknown flag: %s\n' "$1" >&2
     help_msg >&2
@@ -60,10 +66,17 @@ done
 # If no query provided from cli, ask for input
 if [[ ${query[*]} == '' ]]; then
   read -rp 'Search: ' -a query
+  debug_echo "query=(${query[*]})"
 fi
 
 # Perform the search with flatpak
-raw_search=$(flatpak search -- "${query[@]}")
+debug_echo "Performing search"
+if raw_search=$(flatpak search -- "${query[@]}"); then
+  debug_echo "Search complete"
+else
+  echo 'Could not search flatpak.' >&2
+  exit 2
+fi
 
 # Exit if search has no results
 if [[ $raw_search == 'No matches found' ]]; then
@@ -73,6 +86,8 @@ fi
 
 # If a remote is given with '-r', filter for it
 if [[ -n $remote ]]; then
+  debug_echo "Filtering results by remote='${remote}'"
+
   raw_search=$(awk -F "$tab" '$6 == "'"${remote}"'" { print }' <<<"$raw_search")
 
   # Exit if search has no results after filter
