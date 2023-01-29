@@ -1,0 +1,62 @@
+#!/usr/bin/env fish
+# Reencode .mp4s so that they display on Discord
+
+# Define variable defaults
+set ffmpeg_defaults_mp4 '-c:v' libx264 '-c:a' aac
+if not set -q MEME_ROOT
+    set -l vid_dir (xdg-user-dir VIDEOS)
+    set -g MEME_ROOT $vid_dir"/memes"
+end
+
+# Print help message and exit
+function print_usage -a exit_code -d 'Print usage and exit'
+    echo "usage: inbox2meme [-h|--help] [-y|--no-confirm] [[-n|--no-defaults] -- FFMPEG_ARGS]"
+    exit $exit_code
+end
+
+# Parse commandline arguments
+argparse -n inbox2meme h/help y/no-confirm n/no-defaults -- $argv
+or print_usage $status
+
+# Handle given flags
+set -q _flag_h; and print_usage 0
+set -q _flag_n; and set -e ffmpeg_defaults
+
+if test (count $argv) = 0
+    if set -q _flag_n
+        echo "--no-defaults may only be passed when given additional ffmpeg arguments"
+        exit 1
+    end
+end
+
+if test (find $MEME_ROOT/Inbox -type f | count) -eq 0
+    echo 'No files need to be archived.'
+    exit 2
+end
+
+# List files and ask for confirmation if '--no-confirm' isn't passed
+if not set -q _flag_y
+    find $MEME_ROOT/Inbox -type f | path basename | column
+    read -n 1 -p 'printf "\nConvert files? [Y/n]: "' ans
+    switch $ans
+        case y Y ''
+            echo -e '\nConverting files...'
+        case '*'
+            echo -e '\nUser exit.'
+            exit 0
+    end
+end
+
+# Convert mp4 files and move files into the main meme directory
+for file in (find $MEME_ROOT/Inbox -type f)
+    set -l file_ext (path extension $file)
+    set -l file_base (path basename $file)
+
+    printf "Moving %s to %s/%s\n" $file $MEME_ROOT $file_base
+    if test "$file_ext" = '.mp4'
+        ffmpeg -i $file $ffmpeg_defaults_mp4 $argv -- $MEME_ROOT/$file_base
+        and rm $file
+    else
+        mv $file $MEME_ROOT
+    end
+end

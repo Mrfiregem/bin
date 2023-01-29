@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/yt-dlp -P "${MEME_ROOT:=$(xdg-user-dir VIDEOS)/memes}/Inbox" "$@"
