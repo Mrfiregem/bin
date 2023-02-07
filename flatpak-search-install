@@ -14,13 +14,14 @@ debug_echo() { [[ -z ${verbose:+'is_set'} ]] || printf ':: %s\n' "$1" >&2; }
 
 help_msg() {
   cat <<EOF
-usage: flatpak-search-install [-h] [-f | -r REMOTE] [QUERY]
+usage: flatpak-search-install [-h] [-v] [-f | -r REMOTE] [QUERY]
 Interactively install a flatpak with fzf.
 
 Command-line Flags:
-  -h --help  Show this message
-  -f         Shorthand for '-r flathub'
-  -r REMOTE  Filter only apps in REMOTE
+  -h --help    Show this message
+  -v --verbose Show short debug messages
+  -f           Shorthand for '-r flathub'
+  -r REMOTE    Filter only apps in REMOTE
 EOF
 }
 
@@ -97,8 +98,15 @@ if [[ -n $remote ]]; then
   fi
 fi
 
+declare -i max_len=0
+mapfile -t names < <(awk -F "$tab" '{print $1}' <<<"$raw_search")
+for name in "${names[@]}"; do
+  [[ "${#name}" -gt "$max_len" ]] &&  max_len=${#name}
+done
+debug_echo "Longest name is ${max_len} chars."
+
 # Run fzf; output "${reponame}\n${app_id}//${pkgver}\n${pkgname}"; collect into $pkg_info array
-mapfile -t pkg_info < <(fzf "${fzf_args[@]}" <<<"$raw_search" | awk -v 'FS=\t' -v 'OFS=\n' '{ print $6, $3 "//" $5, $1 }')
+mapfile -t pkg_info < <(fzf --tabstop "$(($max_len + 2))" "${fzf_args[@]}" <<<"$raw_search" | awk -v 'FS=\t' -v 'OFS=\n' '{ print $6, $3 "//" $5, $1 }')
 
 if [[ -z ${pkg_info[*]} ]]; then
   # User exited without picking anything
